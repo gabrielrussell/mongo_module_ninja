@@ -47,11 +47,11 @@ AddOption('--ninja-builddir',
         help="Set the location of ninja's builddir for the .ninja_log and .ninja_deps files"
              " (default is current directory)")
 
-AddOption('--icecream',
-        default=False,
-        action='store_true',
-        dest='icecream',
-        help='Use the icecream distributed compile server')
+#AddOption('--icecream',
+#        default=False,
+#        action='store_true',
+#        dest='icecream',
+#        help='Use the icecream distributed compile server')
 
 AddOption('--pch',
         default=False,
@@ -64,7 +64,7 @@ subst_file_script = os.path.join(my_dir, 'subst_file.py')
 test_list_script = os.path.join(my_dir, 'test_list.py')
 touch_compiler_timestamps_script = os.path.join(my_dir, 'touch_compiler_timestamps.py')
 
-icecc_create_env = os.path.join(my_dir, 'icecream', 'icecc-create-env')
+#icecc_create_env = os.path.join(my_dir, 'icecream', 'icecc-create-env')
 
 def makeNinjaFile(target, source, env):
     assert not source
@@ -121,8 +121,8 @@ class NinjaFile(object):
             self.add_error_code_check()
         if env.get('_NINJA_CCACHE'):
             self.set_up_ccache()
-        if env.get('_NINJA_ICECC'):
-            self.set_up_icecc()
+        #if env.get('_NINJA_ICECC'):
+        #    self.set_up_icecc()
 
         if GetOption('pch'):
             self.enable_pch()
@@ -306,74 +306,74 @@ class NinjaFile(object):
                         self.globalEnv['_NINJA_CCACHE'],
                         self.tool_commands[rule])
 
-    def set_up_icecc(self):
-        cc = self.globalEnv.WhereIs('$CC')
-        cxx = self.globalEnv.WhereIs('$CXX')
+    #def set_up_icecc(self):
+    #    cc = self.globalEnv.WhereIs('$CC')
+    #    cxx = self.globalEnv.WhereIs('$CXX')
 
-        # This is a symlink that points to the real environment file with the md5sum name. This is
-        # important because icecream assumes that same-named environments are identical, but we need
-        # to give ninja a fixed name for dependency tracking.
-        version_file = 'build/icecc_envs/{}.tar.gz'.format(cc.replace('/', '_'))
-        env_flags = [
-            'ICECC_VERSION=$$(realpath "%s")' % version_file,
-            'CCACHE_PREFIX=' + self.globalEnv['_NINJA_ICECC'],
-        ]
-        compile_flags = []
+    #    # This is a symlink that points to the real environment file with the md5sum name. This is
+    #    # important because icecream assumes that same-named environments are identical, but we need
+    #    # to give ninja a fixed name for dependency tracking.
+    #    version_file = 'build/icecc_envs/{}.tar.gz'.format(cc.replace('/', '_'))
+    #    env_flags = [
+    #        'ICECC_VERSION=$$(realpath "%s")' % version_file,
+    #        'CCACHE_PREFIX=' + self.globalEnv['_NINJA_ICECC'],
+    #    ]
+    #    compile_flags = []
 
-        if self.globalEnv.ToolchainIs('clang'):
-            env_flags += [ 'ICECC_CLANG_REMOTE_CPP=1' ]
-            if self.globalEnv['_NINJA_CCACHE_VERSION'] >= [3, 4, 1]:
-                # This needs the fix for https://github.com/ccache/ccache/issues/185 to work.
-                env_flags += [ 'CCACHE_NOCPP2=1' ]
-                compile_flags += [ '-frewrite-includes' ]
+    #    if self.globalEnv.ToolchainIs('clang'):
+    #        env_flags += [ 'ICECC_CLANG_REMOTE_CPP=1' ]
+    #        if self.globalEnv['_NINJA_CCACHE_VERSION'] >= [3, 4, 1]:
+    #            # This needs the fix for https://github.com/ccache/ccache/issues/185 to work.
+    #            env_flags += [ 'CCACHE_NOCPP2=1' ]
+    #            compile_flags += [ '-frewrite-includes' ]
 
-            self.builds.append(dict(
-                rule='MAKE_ICECC_ENV',
-                inputs=icecc_create_env,
-                outputs=version_file,
-                implicit=[cc, self.compiler_timestamp_file],
-                variables=dict(
-                    cmd='{icecc_create_env} --clang {clang} {compiler_wrapper} {out}'.format(
-                        icecc_create_env=icecc_create_env,
-                        clang=os.path.realpath(cc),
-                        compiler_wrapper='/bin/true', # we require a new enough iceccd.
-                        out=version_file),
-                    )
-                ))
-        else:
-            env_flags += [ 'CCACHE_NOCPP2=1' ]
-            compile_flags += [ '-fdirectives-only' ]
+    #        self.builds.append(dict(
+    #            rule='MAKE_ICECC_ENV',
+    #            inputs=icecc_create_env,
+    #            outputs=version_file,
+    #            implicit=[cc, self.compiler_timestamp_file],
+    #            variables=dict(
+    #                cmd='{icecc_create_env} --clang {clang} {compiler_wrapper} {out}'.format(
+    #                    icecc_create_env=icecc_create_env,
+    #                    clang=os.path.realpath(cc),
+    #                    compiler_wrapper='/bin/true', # we require a new enough iceccd.
+    #                    out=version_file),
+    #                )
+    #            ))
+    #    else:
+    #        env_flags += [ 'CCACHE_NOCPP2=1' ]
+    #        compile_flags += [ '-fdirectives-only' ]
 
-            self.builds.append(dict(
-                rule='MAKE_ICECC_ENV',
-                inputs=icecc_create_env,
-                outputs=version_file,
-                implicit=[cc, cxx, self.compiler_timestamp_file],
-                variables=dict(
-                    cmd='{icecc_create_env} --gcc {gcc} {gxx} {out}'.format(
-                        icecc_create_env=icecc_create_env,
-                        gcc=os.path.realpath(cc),
-                        gxx=os.path.realpath(cxx),
-                        out=version_file),
-                    )
-                ))
+    #        self.builds.append(dict(
+    #            rule='MAKE_ICECC_ENV',
+    #            inputs=icecc_create_env,
+    #            outputs=version_file,
+    #            implicit=[cc, cxx, self.compiler_timestamp_file],
+    #            variables=dict(
+    #                cmd='{icecc_create_env} --gcc {gcc} {gxx} {out}'.format(
+    #                    icecc_create_env=icecc_create_env,
+    #                    gcc=os.path.realpath(cc),
+    #                    gxx=os.path.realpath(cxx),
+    #                    out=version_file),
+    #                )
+    #            ))
 
-        for rule in ('CC', 'CXX', 'SHCC', 'SHCXX'):
-            if rule in self.tool_commands:
-                self.tool_commands[rule] = (
-                        ' '.join(env_flags + [self.tool_commands[rule]] + compile_flags))
+    #    for rule in ('CC', 'CXX', 'SHCC', 'SHCXX'):
+    #        if rule in self.tool_commands:
+    #            self.tool_commands[rule] = (
+    #                    ' '.join(env_flags + [self.tool_commands[rule]] + compile_flags))
 
-        for build in self.builds:
-            if build['rule'] in ('CC', 'CXX', 'SHCC', 'SHCXX'):
-                build.setdefault('order_only', []).append(version_file)
+    #    for build in self.builds:
+    #        if build['rule'] in ('CC', 'CXX', 'SHCC', 'SHCXX'):
+    #            build.setdefault('order_only', []).append(version_file)
 
-        # Run links through icerun to inform the scheduler that we are busy and to prevent running
-        # hundreds of parallel links.
-        for rule in ('LINK', 'SHLINK'):
-            if rule in self.tool_commands:
-                self.tool_commands[rule] = '{} {}'.format(
-                        self.globalEnv['_NINJA_ICERUN'],
-                        self.tool_commands[rule])
+    #    # Run links through icerun to inform the scheduler that we are busy and to prevent running
+    #    # hundreds of parallel links.
+    #    for rule in ('LINK', 'SHLINK'):
+    #        if rule in self.tool_commands:
+    #            self.tool_commands[rule] = '{} {}'.format(
+    #                    self.globalEnv['_NINJA_ICERUN'],
+    #                    self.tool_commands[rule])
 
     def find_aliases(self):
         for alias in SCons.Node.Alias.default_ans.values():
@@ -844,23 +844,23 @@ class NinjaFile(object):
 
         local_pool = None
         compile_pool = None
-        if self.globalEnv.get('_NINJA_ICECC'):
-            # The local_pool is used for all operations that don't go through icecc and aren't
-            # already using another pool. This ensures that we don't overwhelm the system when
-            # using very high -j values.
-            local_pool = 'local'
-            ninja.pool('local', multiprocessing.cpu_count())
+        #if self.globalEnv.get('_NINJA_ICECC'):
+        #    # The local_pool is used for all operations that don't go through icecc and aren't
+        #    # already using another pool. This ensures that we don't overwhelm the system when
+        #    # using very high -j values.
+        #    local_pool = 'local'
+        #    ninja.pool('local', multiprocessing.cpu_count())
 
-            if self.globalEnv['_NINJA_ICECC'] == self.globalEnv['_NINJA_ICERUN']:
-                # Limit concurrency so we don't start a bunch of tasks only to have them bottleneck
-                # in icerun. This is especially helpful when there is an early compile failure so
-                # that we don't keep starting compiles after the first failure.
-                compile_pool = local_pool
+        #    if self.globalEnv['_NINJA_ICECC'] == self.globalEnv['_NINJA_ICERUN']:
+        #        # Limit concurrency so we don't start a bunch of tasks only to have them bottleneck
+        #        # in icerun. This is especially helpful when there is an early compile failure so
+        #        # that we don't keep starting compiles after the first failure.
+        #        compile_pool = local_pool
 
-            ninja.rule('MAKE_ICECC_ENV',
-                command = '$cmd',
-                pool = 'console', # slow, so show progress.
-                description = 'MAKE_ICECC_ENV $out')
+        #    ninja.rule('MAKE_ICECC_ENV',
+        #        command = '$cmd',
+        #        pool = 'console', # slow, so show progress.
+        #        description = 'MAKE_ICECC_ENV $out')
 
         ninja.rule('RUN_TEST',
                 command='$in',
@@ -1103,10 +1103,10 @@ def configure(conf, env):
         print("*** ccache is used automatically if it is installed.")
         Exit(1)
 
-    if env.get('ICECC'): # flexible to support both missing and set to ''
-        print("*** ERROR: Remove ICECC=icecc flag or set to '' to make ninja generation work.")
-        print("*** Use --icecream instead.")
-        Exit(1)
+    # if env.get('ICECC'): # flexible to support both missing and set to ''
+    #     print("*** ERROR: Remove ICECC=icecc flag or set to '' to make ninja generation work.")
+    #     print("*** Use --icecream instead.")
+    #     Exit(1)
 
     env['NINJA'] = where_is(env, 'ninja')
     if not env['NINJA']:
@@ -1176,42 +1176,42 @@ def configure(conf, env):
                     print("*** ERROR: -gsplit-dwarf requires ccache >= 3.2.3. You have: " + version)
                     Exit(1)
 
-        if GetOption('icecream'):
-            if GetOption('pch'):
-                print('*** ERROR: icecream is not supported with pch')
-                Exit(1)
-            if not env.TargetOSIs('linux'):
-                print('*** ERROR: icecream is currently only supported on linux')
-                Exit(1)
-            if not env['_NINJA_CCACHE']:
-                print('*** ERROR: icecream currently requires ccache')
-                Exit(1)
+        #if GetOption('icecream'):
+        #    if GetOption('pch'):
+        #        print('*** ERROR: icecream is not supported with pch')
+        #        Exit(1)
+        #    if not env.TargetOSIs('linux'):
+        #        print('*** ERROR: icecream is currently only supported on linux')
+        #        Exit(1)
+        #    if not env['_NINJA_CCACHE']:
+        #        print('*** ERROR: icecream currently requires ccache')
+        #        Exit(1)
 
-            env['_NINJA_ICECC'] = where_is(env, 'icecc')
-            if not env['_NINJA_ICECC']:
-                print("*** ERROR: Can't find icecc.")
-                Exit(1)
+        #    env['_NINJA_ICECC'] = where_is(env, 'icecc')
+        #    if not env['_NINJA_ICECC']:
+        #        print("*** ERROR: Can't find icecc.")
+        #        Exit(1)
 
-            env['_NINJA_ICERUN'] = where_is(env, 'icerun')
-            if not env['_NINJA_ICERUN']:
-                print("*** ERROR: Can't find icerun.")
-                Exit(1)
+        #    env['_NINJA_ICERUN'] = where_is(env, 'icerun')
+        #    if not env['_NINJA_ICERUN']:
+        #        print("*** ERROR: Can't find icerun.")
+        #        Exit(1)
 
-            version = (subprocess.check_output([env['_NINJA_ICECC'], '--version'])
-                        .decode('utf8')
-                        .split()[1])
-            if version < '1.1rc2' and version != '1.1' and version < '1.2':
-                print("*** ERROR: This requires icecc >= 1.1rc2, but you have " + version)
-                Exit(1)
+        #    version = (subprocess.check_output([env['_NINJA_ICECC'], '--version'])
+        #                .decode('utf8')
+        #                .split()[1])
+        #    if version < '1.1rc2' and version != '1.1' and version < '1.2':
+        #        print("*** ERROR: This requires icecc >= 1.1rc2, but you have " + version)
+        #        Exit(1)
 
-            if any(flag.startswith('-fsanitize-blacklist') for flag in env['CCFLAGS']):
-                print("*** WARNING: The -fsanitize-blacklist flag only works on local builds.")
-                print('*** Automatically limiting build concurrency and disabling remote execution.')
-                print('***')
+        #    if any(flag.startswith('-fsanitize-blacklist') for flag in env['CCFLAGS']):
+        #        print("*** WARNING: The -fsanitize-blacklist flag only works on local builds.")
+        #        print('*** Automatically limiting build concurrency and disabling remote execution.')
+        #        print('***')
 
-                # Use icerun so the scheduler knows we are busy. Also helps when multiple developers
-                # are using the same machine.
-                env['_NINJA_ICECC'] = env['_NINJA_ICERUN']
+        #        # Use icerun so the scheduler knows we are busy. Also helps when multiple developers
+        #        # are using the same machine.
+        #        env['_NINJA_ICECC'] = env['_NINJA_ICERUN']
 
     for ninja_file in ninja_files:
         cmd = env.Command(ninja_file, [], Action(makeNinjaFile, action_str))
